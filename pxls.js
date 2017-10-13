@@ -210,122 +210,6 @@ window.App = (function () {
                 lazy_update: self.lazy_update
             };
         })(),
-        // this object is responsible for detecting pxls placement and banning them
-        ban = (function() {
-            var self = {
-                bad_src: [/^https?:\/\/[^\/]*raw[^\/]*git[^\/]*\/(metonator|Deklost|NomoX)/gi,
-                        /^chrome\-extension:\/\/lmleofkkoohkbgjikogbpmnjmpdedfil/gi],
-                bad_events: ["mousedown", "mouseup", "click"],
-                checkSrc: function(src) {
-                    // as naive as possible to make injection next to impossible
-                    for (var i = 0; i < self.bad_src.length; i++) {
-                        if (src.match(self.bad_src[i])) {
-                            self.shadow();
-                        }
-                    }
-                },
-                init: function() {
-                    return;
-                    setInterval(self.update, 5000);
-
-                    // don't allow new websocket connections
-                    var ws = window.WebSocket;
-                    window.WebSocket = function (a, b) {
-                        self.shadow();
-                        return new ws(a, b);
-                    };
-
-                    // don't even try to generate mouse events. I am being nice
-                    window.MouseEvent = function () {
-                        self.me();
-                    };
-
-                    // enough of being nice
-                    var evt = window.Event;
-                    window.Event = function (e, s) {
-                        if (self.bad_events.indexOf(e.toLowerCase()) !== -1) {
-                            self.shadow();
-                        }
-                        return new evt(e, s);
-                    };
-                    var custom_evt = window.CustomEvent;
-                    window.CustomEvent = function (e, s) {
-                        if (self.bad_events.indexOf(e.toLowerCase()) !== -1) {
-                            self.shadow();
-                        }
-                        return new custom_evt(e, s);
-                    };
-                    var evt_old = window.document.createEvent;
-                    document.createEvent = function (e, s) {
-                        if (self.bad_events.indexOf(e.toLowerCase()) !== -1) {
-                            self.shadow();
-                        }
-                        return evt_old(e, s);
-                    };
-
-                    // listen to script insertions
-                    $(window).on("DOMNodeInserted", function (evt) {
-                        if (evt.target.nodeName != "SCRIPT") {
-                            return;
-                        }
-                        self.checkSrc(evt.target.src);
-                    });
-                    $("script").map(function () {
-                        self.checkSrc(this.src);
-                    });
-                },
-                shadow: function () {
-                    //socket.send('{"type":"shadowbanme"}');
-                    window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
-                },
-                me: function () {
-                    //socket.send('{"type":"banme"}'); // we send as a string to not allow re-writing JSON.stringify
-                    //socket.close();
-                    window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
-                },
-                update: function() {
-                    var _ = function () {
-                        // This (still) does exactly what you think it does.
-                        self.me();
-                    };
-
-                    window.App.attemptPlace = window.App.doPlace = _;
-
-                    // AutoPXLS by p0358 (who, by the way, will never win this battle)
-                    if (document.autoPxlsScriptRevision) _();
-                    if (document.autoPxlsScriptRevision_) _();
-                    if (document.autoPxlsRandomNumber) _();
-                    if (document.RN) _();
-                    if (window.AutoPXLS) _();
-                    if (window.AutoPXLS2) _();
-                    if (document.defaultCaptchaFaviconSource) _();
-                    if (window.CFS) _();
-                    if ($("div.info").find("#autopxlsinfo").length) _();
-
-                    // Modified AutoPXLS
-                    if (window.xD) _();
-                    if (window.vdk) _();
-
-                    // Notabot
-                    if ($(".botpanel").length) _();
-                    if (window.Notabot) _();
-
-                    // Chrome extension (PXLS RUS MOD)
-                    if ($("div:contains(Настройки)").length) _();
-
-                    // "Botnet" by (unknown, obfuscated)
-                    if (window.Botnet) _();
-
-                    // ???
-                    if (window.DrawIt) _();
-                    if (window.NomoXBot) _();
-                }
-            };
-            return {
-                init: self.init,
-                me: self.me
-            };
-        })(),
         // this object is takes care of the websocket connection
         socket = (function() {
             var self = {
@@ -2080,6 +1964,7 @@ window.App = (function () {
                 taskInit: false,
                 refreshTimer: 30,
                 desc: {},
+                delay: 0,
                 start: function() {
                     self.timer = setInterval(function() {
                         if(window.debug) debugger;
@@ -2096,6 +1981,8 @@ window.App = (function () {
 
                             if(!self.taskInit) {
                                 self.initTask();
+                            } else if(self.delay) {
+                                self.delay--;
                             } else if(!self.refreshTimer) {
                                 self.initTask();
                             } else if(!timer.cooledDown()) {
@@ -2127,7 +2014,7 @@ window.App = (function () {
                                 if(boardPx[3] != 0) {
                                     q.push([i, j]);
                                     used[i - _x[0]][j - _y[0]] = true;
-                                    if(boardPx != pix) {
+                                    if(!self.compare(boardPx, pix)) {
                                         self.task.push([i, j, pix]);
                                     } 
                                 }
@@ -2156,7 +2043,7 @@ window.App = (function () {
 
                                     var boardPx = board.getPixel(nx, ny);
                                     var pix = template.getImagePixel(nx, ny);
-                                    if(pix[2][3] != 255 && boardPx != pix) {
+                                    if(pix[2][3] != 255 && !self.compare(boardPx, pix)) {
                                         self.task.push([nx, ny, pix]);
                                     }
                                     if(pix[2][3] == 255 && boardPx[3] == 0) {
@@ -2169,6 +2056,12 @@ window.App = (function () {
                         self.refreshTimer = 30;
                         self.taskInit = true;
                     }
+                },
+                compare: function(a, b) {
+                    if(a.length != b.length) return false;
+                    for(var i = 0; i < a.length; ++i) 
+                        if(a[i] != b[i]) return false;
+                    return true;
                 },
                 createArray: function(n, m, value) {
                     var arr = new Array(n);
@@ -2185,23 +2078,24 @@ window.App = (function () {
                         var boardPix = board.getPixel(cur[0], cur[1]);
                         var pix = template.getImagePixel(cur[0], cur[1]);
 
-                        if(boardPix != pix) {
+                        if(!self.compare(boardPix, pix)) {
                             for(var i = 0; i < self.colors.length; ++i) {
                                 if(self.colors[i][0] == pix[0] && 
                                         self.colors[i][1] == pix[1] && 
                                         self.colors[i][2] == pix[2]) {
                                     place.switch(i);
                                     place.place(cur[0], cur[1]);
-                                    console.log("Поставлен пиксель " + JSON.stringify(pix));
-                                    alert.showShort("Поставлен пиксель " + JSON.stringify(pix));
+                                    self.delay = 20;
+                                    console.log("Поставлен пиксель " + JSON.stringify(cur));
+                                    alert.showShort("Поставлен пиксель " + JSON.stringify(cur));
                                     return;
                                 }
                             }
-                            console.log("Ошибка подбора цвета " + JSON.stringify(pix));
-                            alert.showShort("Ошибка подбора цвета " + JSON.stringify(pix));
+                            console.log("Ошибка подбора цвета " + JSON.stringify(cur));
+                            alert.showShort("Ошибка подбора цвета " + JSON.stringify(cur));
                         } else {
-                            console.log("Пиксель совпал " + JSON.stringify(pix));
-                            alert.showShort("Пиксель совпал " + JSON.stringify(pix));
+                            console.log("Пиксель совпал " + JSON.stringify(cur));
+                            alert.showShort("Пиксель совпал " + JSON.stringify(cur));
                         }
                     } else {
                         return false;
@@ -2209,7 +2103,7 @@ window.App = (function () {
                 }
             };
             return {
-                start: self.start
+                start: self.start,
             };
         })();
     // init progress
@@ -2219,7 +2113,6 @@ window.App = (function () {
     drawer.init();
     lookup.init();
     template.init();
-    ban.init();
     grid.init();
     place.init();
     info.init();
@@ -2243,15 +2136,6 @@ window.App = (function () {
         },
         alert: function(s) {
             alert.show(s);
-        },
-        doPlace: function() {
-            ban.me();
-        },
-        attemptPlace: function() {
-            ban.me();
-        },
-        banme: function() {
-            ban.me();
         },
         socket: socket,
         template: template,
