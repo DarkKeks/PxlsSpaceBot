@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumbrl Reg
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  try to take over the world!
 // @author       DarkKeks
 // @match        https://www.tumblr.com/register*
@@ -12,8 +12,12 @@
     'use strict';
 
     window.$ = function(s) { return document.querySelector(s); };
-    function autoFill() {
-        $('.signup_get_started_btn').click();
+    
+    var step1 = function() {
+        if(!$('.signup_get_started_btn.active')) return setTimeout(step1, 100);
+        $('.signup_get_started_btn.active').click();
+        
+        console.log("And now?");
 
         function randomString() {
             var text = "";
@@ -48,7 +52,6 @@
             setTimeout(step3, 100);
         };
         setTimeout(step2, 100);
-    }
-
-    autoFill();
+    };
+    setTimeout(step1, 100);
 })();
