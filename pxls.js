@@ -1964,7 +1964,7 @@ window.App = (function () {
                 refreshTimer: 30,
                 desc: {},
                 delay: 0,
-                self.lazy_init: 0,
+                lazy_init: 0,
                 start: function() {
                     self.timer = setInterval(function() {
                         if(window.debug) debugger;
