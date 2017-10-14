@@ -1971,6 +1971,8 @@ window.App = (function () {
                 delay: 0,
                 lazy_init: 0,
                 start: function() {
+                    console.log("Starting PixelBot.");
+
                     self.task = new self.Queue();
                     self.timer = setInterval(function() {
                         if(window.debug) debugger;
@@ -1986,21 +1988,16 @@ window.App = (function () {
                             self.desc = desc;
 
                             if(!self.lazy_init) {
-                                console.log("Doing lazy init.");
                                 self.initTask();
                             } else if(changed) {
                                 self.lazy_init = 5;
                             } else if(self.delay) {
-                                console.log("Pixel place delay.");
                                 self.delay--;
                             } else if(!self.refreshTimer) {
-                                console.log("Placed a lot, should refresh task.");
                                 self.initTask();
                             } else if(!timer.cooledDown()) {
-                                console.log("Waiting for timer.");
                                 return;
                             } else {
-                                console.log("Plaing pixel.");
                                 self.refreshTimer--;
                                 self.doPixel();
                             }
