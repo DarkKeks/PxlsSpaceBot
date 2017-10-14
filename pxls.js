@@ -1986,16 +1986,21 @@ window.App = (function () {
                             self.desc = desc;
 
                             if(!self.lazy_init) {
+                                console.log("Doing lazy init.");
                                 self.initTask();
                             } else if(changed) {
                                 self.lazy_init = 5;
                             } else if(self.delay) {
+                                console.log("Pixel place delay.");
                                 self.delay--;
                             } else if(!self.refreshTimer) {
+                                console.log("Placed a lot, should refresh task.");
                                 self.initTask();
                             } else if(!timer.cooledDown()) {
+                                console.log("Waiting for timer.");
                                 return;
                             } else {
+                                console.log("Plaing pixel.");
                                 self.refreshTimer--;
                                 self.doPixel();
                             }
@@ -2024,7 +2029,7 @@ window.App = (function () {
                         for(var i = posX[0]; i < posX[1]; ++i) {
                             for(var j = posY[0]; j < posY[1]; ++j) {
                                 var start = ((j - posY[0]) * n + (i - posX[0])) * 4;
-                                if(!brd[start + 3]) { // if does exist
+                                if(brd[start + 3]) { // if does exist
                                     q.push([i, j]);
                                     used[i - posX[0]][j - posY[0]] = true;
                                     if(!cmpPixels(i, j)) {
@@ -2067,7 +2072,7 @@ window.App = (function () {
                         self.lazy_init = -1;
                     }
                 },
-                compare: function(a, b) {
+                compareArrays: function(a, b) {
                     if(!a || !b) return false;
                     if(a.length != b.length) return false;
                     for(var i = 0; i < a.length; ++i) 
@@ -2088,9 +2093,9 @@ window.App = (function () {
                     if(cur) {
                         var boardPix = board.getPixel(cur[0], cur[1]);
 
-                        if(!self.compare(boardPix, cur[2])) {
+                        if(!self.compareArrays(boardPix, cur[2])) {
                             for(var i = 0; i < self.colors.length; ++i) {
-                                if(self.compare(self.colors[i], cur[2])) {
+                                if(self.compareArrays(self.colors[i], cur[2])) {
                                     place.switch(i);
                                     place.place(cur[0], cur[1]);
                                     self.delay = 20;
