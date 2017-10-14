@@ -650,6 +650,9 @@ window.App = (function () {
                 getPixel: function (x, y) {
                     return self.ctx.getImageData(x, y, 1, 1).data;
                 },
+                getRange: function (x, y, width, height) {
+                    return self.ctx.getImageData(x, y, width, height).data;
+                },
                 fromScreen: function (screenX, screenY) {
                     var adjust_x = 0,
                         adjust_y = 0;
@@ -721,6 +724,7 @@ window.App = (function () {
                 setScale: self.setScale,
                 setPixel: self.setPixel,
                 getPixel: self.getPixel,
+                getRange: self.getRange,
                 fromScreen: self.fromScreen,
                 toScreen: self.toScreen,
                 save: self.save,
@@ -883,19 +887,19 @@ window.App = (function () {
                     self.img_ctx.drawImage(img, 0, 0, img.width, img.height);
                     self.img_data = self.img_ctx.getImageData(0, 0, img.width, img.height);
                 },
+                get_image_data: function() {
+                    return self.img_data;
+                },
                 get_image_pixel: function(x, y) {
                     if(self.t.use && self.img_data) {
                         x -= self.t.x;
                         y -= self.t.y;
-                        if(x >= 0 && x < self.img_data.width &&
-                                y >= 0 && y < self.img_data.height) {
-                            var start = Math.max(0, y) * self.img_data.width + Math.max(0, x);
-                            start *= 4;
-                            var data = [];
-                            for(var i = 0; i < 4; ++i) 
-                                data.push(self.img_data.data[start + i]);
-                            return data;
-                        }
+                        var start = y * self.img_data.width + x;
+                        start *= 4;
+                        var data = [0, 0, 0, 0];
+                        for(var i = 0; i < 4; ++i) 
+                            data[i] = self.img_data.data[start + i];
+                        return data;
                     }
                     return null;
                 },
@@ -1123,7 +1127,8 @@ window.App = (function () {
                 draw: self.draw,
                 init: self.init,
                 getImagePixel: self.get_image_pixel,
-                getImageDescription: self.get_image_description
+                getImageDescription: self.get_image_description,
+                getImageData: self.get_image_data
             };
         })(),
         // here all the grid stuff happens
@@ -1941,31 +1946,32 @@ window.App = (function () {
         PixelBot = (function() {
             var self = {
                 colors: [[255, 255, 255],
-                        [205, 205, 205],
-                        [136, 136, 136],
-                        [34, 34, 34],
-                        [0, 0, 0],
-                        [255, 167, 209],
-                        [229, 0, 0],
-                        [128, 0, 0],
-                        [255, 221, 202],
-                        [229, 149, 0],
-                        [160, 106, 66],
-                        [229, 217, 0],
-                        [148, 224, 68],
-                        [2, 190, 1],
-                        [0, 211, 221],
-                        [0, 131, 199],
-                        [0, 0, 234],
-                        [207, 110, 228],
-                        [255, 0, 255],
-                        [130, 0, 128]],
-                task: [],
+                         [205, 205, 205],
+                         [136, 136, 136],
+                         [34, 34, 34],
+                         [0, 0, 0],
+                         [255, 167, 209],
+                         [229, 0, 0],
+                         [128, 0, 0],
+                         [255, 221, 202],
+                         [229, 149, 0],
+                         [160, 106, 66],
+                         [229, 217, 0],
+                         [148, 224, 68],
+                         [2, 190, 1],
+                         [0, 211, 221],
+                         [0, 131, 199],
+                         [0, 0, 234],
+                         [207, 110, 228],
+                         [255, 0, 255],
+                         [130, 0, 128]],
+                task: null,
                 refreshTimer: 30,
                 desc: {},
                 delay: 0,
                 lazy_init: 0,
                 start: function() {
+                    self.task = new self.Queue();
                     self.timer = setInterval(function() {
                         if(window.debug) debugger;
                         var desc = template.getImageDescription();
@@ -1997,58 +2003,62 @@ window.App = (function () {
                     }, 1000);
                 },
                 initTask: function() {
-                    self.task = [];
+                    self.task.clear();
                     var desc = template.getImageDescription();
                     if(desc) {
-                        var n = desc.width, m = desc.height;
-                        var _x = [desc.x, desc.x + n];
-                        var _y = [desc.y, desc.y + m];
-                        var used = self.createArray(n, m, false);
+                        var n = desc.width, m = desc.height,
+                            posX = [desc.x, desc.x + n],
+                            posY = [desc.y, desc.y + m],
+                            used = self.createArray(n, m, false),
+                            brd = board.getRange(desc.x, desc.y, desc.width, desc.height),
+                            tmp = template.getImageData().data;
 
-                        var q = [];
+                        var cmpPixels = function(x, y) {
+                            for(var start = ((y - posY[0]) * n + (x - posX[0])) * 4, i = 0; i < 4; ++i)
+                                if(brd[start + i] != tmp[start + i]) return false;
+                            return true;
+                        }
 
-                        for(var i = _x[0]; i < _x[1]; ++i) {
-                            for(var j = _y[0]; j < _y[1]; ++j) {
-                                var boardPx = board.getPixel(i, j);
-                                var pix = template.getImagePixel(i, j);
-                                if(boardPx[3] != 0) {
+                        var q = new self.Queue();
+
+                        for(var i = posX[0]; i < posX[1]; ++i) {
+                            for(var j = posY[0]; j < posY[1]; ++j) {
+                                var start = ((j - posY[0]) * n + (i - posX[0])) * 4;
+                                if(!brd[start + 3]) { // if does exist
                                     q.push([i, j]);
-                                    used[i - _x[0]][j - _y[0]] = true;
-                                    if(!self.compare(boardPx, pix)) {
-                                        self.task.push([i, j, pix]);
+                                    used[i - posX[0]][j - posY[0]] = true;
+                                    if(!cmpPixels(i, j)) {
+                                        self.task.push([i, j, [tmp[start], tmp[start + 1], tmp[start + 2]]]);
                                     } 
                                 }
                             }
                         }
 
-                        if(!q.length) {
-                            window.alert("Проблемы у нас...");
+                        if(q.empty()) {
+                            window.alert("На месте шаблона должен быть хотя бы один пиксель...");
                         }
 
                         var dx = [0, 1, 0, -1];
                         var dy = [1, 0, -1, 0];
-                        while(q.length) {
-                            if(self.task.length > 1024) break;
-                            var cur = q.shift();
+                        while(!q.empty()) {
+                            if(self.task.size() > 5000) break;
+                            var cur = q.pop();
 
                             for(var d = 0; d < 4; ++d) {
                                 var nx = cur[0] + dx[d];
                                 var ny = cur[1] + dy[d];
-                                if( nx >= _x[0] && nx < _x[1] && 
-                                    ny >= _y[0] && ny < _y[1] &&
-                                    !used[nx - _x[0]][ny - _y[0]]) {
+                                if( nx >= posX[0] && nx < posX[1] && 
+                                    ny >= posY[0] && ny < posY[1] &&
+                                    !used[nx - posX[0]][ny - posY[0]]) {
 
-                                    used[nx - _x[0]][ny - _y[0]] = true;
+                                    used[nx - posX[0]][ny - posY[0]] = true;
                                     q.push([nx, ny]);
 
-                                    var boardPx = board.getPixel(nx, ny);
-                                    var pix = template.getImagePixel(nx, ny);
-                                    if(pix[2][3] != 255 && !self.compare(boardPx, pix)) {
-                                        self.task.push([nx, ny, pix]);
-                                    }
-                                    if(pix[2][3] == 255 && boardPx[3] == 0) {
-                                        self.task.push([nx, ny, [205, 205, 205, 255]]);
-                                    }
+                                    var start = ((ny - posY[0]) * n + (nx - posX[0])) * 4;
+                                    if(tmp[start + 3] != 255 && !cmpPixels(nx, ny))
+                                        self.task.push([nx, ny, [tmp[start], tmp[start + 1], tmp[start + 2]]]);
+                                    if(tmp[start + 3] == 255 && brd[start + 3] == 0)
+                                        self.task.push([nx, ny, [205, 205, 205]]);
                                 }
                             }
                         }
@@ -2074,16 +2084,13 @@ window.App = (function () {
                     return arr;
                 },
                 doPixel: function() {
-                    var cur = self.task.shift();
+                    var cur = self.task.pop();
                     if(cur) {
                         var boardPix = board.getPixel(cur[0], cur[1]);
-                        var pix = template.getImagePixel(cur[0], cur[1]);
 
-                        if(!self.compare(boardPix, pix)) {
+                        if(!self.compare(boardPix, cur[2])) {
                             for(var i = 0; i < self.colors.length; ++i) {
-                                if(self.colors[i][0] == pix[0] && 
-                                        self.colors[i][1] == pix[1] && 
-                                        self.colors[i][2] == pix[2]) {
+                                if(self.compare(self.colors[i], cur[2])) {
                                     place.switch(i);
                                     place.place(cur[0], cur[1]);
                                     self.delay = 20;
@@ -2101,10 +2108,43 @@ window.App = (function () {
                     } else {
                         return false;
                     }
-                }
+                },
+                Queue: function() {
+                    function Queue() {
+                        this.capacity = 1e4;
+                        this.data = new Array(this.capacity);
+                        this.start = this.end = 0;
+                    }
+
+                    Queue.prototype.push = function(value) {
+                        this.data[(this.end++) % this.capacity] = value;
+                    };
+
+                    Queue.prototype.pop = function() {
+                        if(this.start == this.end) return null;
+                        return this.data[(this.start++) % this.capacity];
+                    };
+
+                    Queue.prototype.empty = function() {
+                        return (this.start % this.capacity) == (this.end % this.capacity);
+                    };
+
+                    Queue.prototype.clear = function() {
+                        this.start = this.end = 0;
+                    };
+
+                    Queue.prototype.size = function() {
+                        this.start %= this.capacity;
+                        this.end %= this.capacity;
+                        if(this.start <= this.end) return this.end - this.end;
+                        return this.end + this.capacity - this.start;
+                    };
+
+                    return Queue;
+                }()
             };
             return {
-                start: self.start,
+                start: self.start
             };
         })();
     // init progress
