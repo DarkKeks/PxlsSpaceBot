@@ -1961,10 +1961,10 @@ window.App = (function () {
                         [255, 0, 255],
                         [130, 0, 128]],
                 task: [],
-                taskInit: false,
                 refreshTimer: 30,
                 desc: {},
                 delay: 0,
+                self.lazy_init: 0,
                 start: function() {
                     self.timer = setInterval(function() {
                         if(window.debug) debugger;
@@ -1979,16 +1979,16 @@ window.App = (function () {
                             });
                             self.desc = desc;
 
-                            if(!self.taskInit) {
+                            if(!self.lazy_init) {
                                 self.initTask();
+                            } else if(changed) {
+                                self.lazy_init = 5;
                             } else if(self.delay) {
                                 self.delay--;
                             } else if(!self.refreshTimer) {
                                 self.initTask();
                             } else if(!timer.cooledDown()) {
                                 return;
-                            } else if(changed) {
-                                self.initTask();
                             } else {
                                 self.refreshTimer--;
                                 self.doPixel();
@@ -2054,10 +2054,11 @@ window.App = (function () {
                         }
 
                         self.refreshTimer = 30;
-                        self.taskInit = true;
+                        self.lazy_init = -1;
                     }
                 },
                 compare: function(a, b) {
+                    if(!a || !b) return false;
                     if(a.length != b.length) return false;
                     for(var i = 0; i < a.length; ++i) 
                         if(a[i] != b[i]) return false;
