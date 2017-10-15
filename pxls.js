@@ -1964,6 +1964,7 @@ window.App = (function () {
                 desc: {},
                 delay: 0,
                 lazy_init: 0,
+                auth_message_count: 0,
                 start: function() {
                     self.log("Загружаем PixelBot.");
 
@@ -1981,7 +1982,11 @@ window.App = (function () {
                             });
                             self.desc = desc;
 
-                            if(!self.lazy_init) {
+                            if(!user.isLoggedIn()) {
+                                self.auth_message_count++;
+                                if(self.auth_message_count <= 10)
+                                    self.log("Вы не авторизованы.", 'warning');
+                            } else if(!self.lazy_init) {
                                 self.initTask();
                             } else if(changed) {
                                 self.lazy_init = 5;
@@ -2104,8 +2109,10 @@ window.App = (function () {
                     }
                 },
                 log: function(message, type) {
-                    if(pxlog) var logger = pxlog;
-                        else var logger = console;
+                    if(typeof pxlslog !== 'undefined') 
+                        var logger = pxlslog;
+                    else 
+                        var logger = console;
                     if(type === 'error')
                         logger.error(message);
                     else if(type === 'warning') 
@@ -2177,6 +2184,7 @@ window.App = (function () {
                 addListener: self.addListener
             }
         })();
+
     // init progress
     query.init();
     board.init();

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Pxls Bot Loader
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      2.0
 // @description  try to take over the world!
 // @author       DarkKeks
 // @match        https://pxls.space/*
@@ -9,6 +9,32 @@
 // @updateURL    https://rawgit.com/DarkKeks/PxlsSpaceBot/master/PxlsBotLoader.user.js
 // @grant        none
 // ==/UserScript==
+
+var scripts = {
+    main: 'https://rawgit.com/DarkKeks/PxlsSpaceBot/master/pxls.js',
+    pxlog: 'https://rawgit.com/quazzart/pxlslog/master/pxlslog.js',
+    jQueryUIjs: 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'
+};
+
+var inject = {
+    base: function(name, element, attributes) {
+        console.log("Injecting " + name);
+        document.body.appendChild(element);
+        if(onload) element.onload = onload;
+        attributes(element);
+    },
+    script: function(name, onload) {
+        inject.base(name, document.createElement('script'), function(script) {
+            script.src = scripts[name] + "?v=" + Math.random();
+        });
+    },
+    link: function(name, url, onload) {
+        inject.base(name, document.createElement('link'), function(link) {
+            link.rel = 'stylesheet';
+            link.href = url + "?v=" + Math.random();
+        });
+    }
+}
 
 var botTask = {
     use: true,
@@ -19,32 +45,25 @@ var botTask = {
     opacity: 0.5
 };
 
-var scripts = {
-    main: 'https://rawgit.com/DarkKeks/PxlsSpaceBot/master/pxls.js',
-    pxlog: 'https://rawgit.com/quazzart/PxlsSpaceBotX/master/pxlog.js'
-};
-
-var inject = function() {
-    var injectOne = function(name, onload) {
-        console.log("Injecting " + name);
-        var script = document.createElement('script');
-        document.body.appendChild(script);
-        if(onload) script.onload = onload;
-        script.src = scripts[name] + '?v=' + Math.random();
-    };
-
-    injectOne('main', function() {
+var load = function() {
+    inject.script('main', function() {
         App.onBoardReady.addListener(function() {
             App.template.update(botTask);
         });
     });
-    injectOne('pxlog');
+
+    //pxlog
+    inject.script('pxlog');
+    inject.link('pxlogcss', 'https://rawgit.com/quazzart/pxlslog/master/pxlslog.css');
+    inject.script('jQueryUIjs');
+    inject.link('jQueryUIcss', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css');
+
 };
 
 if (document.readyState == 'complete') {
-    inject();
+    load();
 } else {
     window.addEventListener("load", function() {
-        inject();
+        load();
     });
 }
