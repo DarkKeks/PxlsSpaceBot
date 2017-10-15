@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Pxls Bot Loader
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  try to take over the world!
 // @author       DarkKeks
 // @match        https://pxls.space/*
@@ -17,24 +17,24 @@ var scripts = {
 };
 
 var inject = {
-    base: function(name, element, attributes) {
+    base: function(name, element, attributes, onload) {
         console.log("Injecting " + name);
-        document.body.appendChild(element);
+        document.head.appendChild(element);
         if(onload) element.onload = onload;
         attributes(element);
     },
     script: function(name, onload) {
         inject.base(name, document.createElement('script'), function(script) {
-            script.src = scripts[name] + "?v=" + Math.random();
-        });
+            script.src = scripts[name];// + "?v=" + Math.random();
+        }, onload);
     },
     link: function(name, url, onload) {
         inject.base(name, document.createElement('link'), function(link) {
             link.rel = 'stylesheet';
             link.href = url + "?v=" + Math.random();
-        });
+        }, onload);
     }
-}
+};
 
 var botTask = {
     use: true,
@@ -53,10 +53,14 @@ var load = function() {
     });
 
     //pxlog
+    inject.script('jQueryUIjs', function() {
+        if(typeof pxlslog !== 'undefined' && !pxlslog.ready) {
+            pxlslog.create();
+        }
+    });
     inject.script('pxlog');
-    inject.link('pxlogcss', 'https://rawgit.com/quazzart/pxlslog/master/pxlslog.css');
-    inject.script('jQueryUIjs');
     inject.link('jQueryUIcss', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css');
+    inject.link('pxlogcss', 'https://rawgit.com/quazzart/pxlslog/master/pxlslog.css');
 
 };
 

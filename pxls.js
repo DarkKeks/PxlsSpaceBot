@@ -473,7 +473,7 @@ window.App = (function () {
                         socket.init();
                         binary_ajax("/boarddata" + "?_" + (new Date()).getTime(), function(data) {
                             self.draw(data);
-                            App.onBoardReady.fire();
+                            onBoardReady.fire();
                         }, socket.reconnect);
                         
                         if (self.use_js_render) {
