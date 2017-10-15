@@ -2092,7 +2092,7 @@ window.App = (function () {
                     if(cur) {
                         var boardPix = board.getPixel(cur[0], cur[1]);
 
-                        if(!self.compareArrays([boardPix[0], boardPix[1], boardPix[2]], cur[2])) {
+                        if(!self.compareArrays(boardPix, cur[2].concat([255]))) {
                             for(var i = 0; i < self.colors.length; ++i) {
                                 if(self.compareArrays(self.colors[i], cur[2])) {
                                     place.switch(i);
