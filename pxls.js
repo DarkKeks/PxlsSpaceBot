@@ -473,15 +473,7 @@ window.App = (function () {
                         socket.init();
                         binary_ajax("/boarddata" + "?_" + (new Date()).getTime(), function(data) {
                             self.draw(data);
-                            template.update({
-                                use: true,
-                                url: 'https://i.imgur.com/YNACc3J.png',
-                                x: 1147,
-                                y: 641,
-                                width: -1,
-                                opacity: 0.5
-                            });
-                            PixelBot.start();
+                            App.onBoardReady.fire();
                         }, socket.reconnect);
                         
                         if (self.use_js_render) {
@@ -1973,7 +1965,7 @@ window.App = (function () {
                 delay: 0,
                 lazy_init: 0,
                 start: function() {
-                    console.log("Starting PixelBot.");
+                    self.log("Загружаем PixelBot.");
 
                     self.task = new self.Queue();
                     self.timer = setInterval(function() {
@@ -2007,6 +1999,7 @@ window.App = (function () {
                     }, 1000);
                 },
                 initTask: function() {
+                    self.log("Генерируем задание.");
                     self.task.clear();
                     var desc = template.getImageDescription();
                     if(desc) {
@@ -2039,7 +2032,7 @@ window.App = (function () {
                         }
 
                         if(q.empty()) {
-                            window.alert("На месте шаблона должен быть хотя бы один пиксель...");
+                            self.log("На месте шаблона должен быть хотя бы один пиксель...", 'error');
                         }
 
                         var dx = [0, 1, 0, -1];
@@ -2097,21 +2090,30 @@ window.App = (function () {
                                 if(self.compareArrays(self.colors[i], cur[2])) {
                                     place.switch(i);
                                     place.place(cur[0], cur[1]);
-                                    self.delay = 20;
-                                    console.log("Поставлен пиксель " + JSON.stringify(cur));
-                                    alert.showShort("Поставлен пиксель " + JSON.stringify(cur));
+                                    self.delay = 10;
+                                    self.log("Поставлен пиксель " + JSON.stringify(cur));
                                     return;
                                 }
                             }
-                            console.log("Ошибка подбора цвета " + JSON.stringify(cur));
-                            alert.showShort("Ошибка подбора цвета " + JSON.stringify(cur));
+                            self.log("Ошибка подбора цвета " + JSON.stringify(cur) + ".", 'error');
                         } else {
-                            console.log("Пиксель совпал " + JSON.stringify(cur));
-                            alert.showShort("Пиксель совпал " + JSON.stringify(cur));
+                            self.log("Пиксель совпал " + JSON.stringify(cur) + ".");
                         }
                     } else {
-                        return false;
+                        self.info("Задание пустое.", 'info');
                     }
+                },
+                log: function(message, type) {
+                    if(pxlog) var logger = pxlog;
+                        else var logger = console;
+                    if(type === 'error')
+                        logger.error(message);
+                    else if(type === 'warning') 
+                        logger.warn(message);
+                    else if(type === 'info')
+                        logger.info(message);
+                    else 
+                        logger.log(message);
                 },
                 Queue: function() {
                     function Queue() {
@@ -2150,6 +2152,30 @@ window.App = (function () {
             return {
                 start: self.start
             };
+        })(),
+        onBoardReady = (function() {
+            var self = {
+                listeners: [],
+                fired: false,
+                fire: function() {
+                    self.fired = true;
+                    $.map(self.listeners, function(f) {
+                        f();
+                    })
+                },
+                addListener: function(f) {
+                    if(!self.fired) {
+                        self.listeners.push(f);
+                    } else {
+                        f();
+                    }
+                }
+            }
+
+            return {
+                fire: self.fire,
+                addListener: self.addListener
+            }
         })();
     // init progress
     query.init();
@@ -2166,6 +2192,9 @@ window.App = (function () {
     coords.init();
     user.init();
     notification.init();
+    onBoardReady.addListener(function(){
+        PixelBot.start();
+    })
     // and here we finally go...
     board.start();
 
@@ -2186,6 +2215,7 @@ window.App = (function () {
         template: template,
         board: board,
         place: place,
-        PixelBot: PixelBot
+        PixelBot: PixelBot,
+        onBoardReady: onBoardReady
     };
 })();
