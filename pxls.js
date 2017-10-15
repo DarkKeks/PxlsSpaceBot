@@ -950,6 +950,7 @@ window.App = (function () {
                         alt: "template",
                         crossOrigin: "Anonymous"
                     }).css({
+                        'image-rendering': 'crisp-edges',
                         top: self.t.y,
                         left: self.t.x,
                         opacity: self.t.opacity,
@@ -1965,6 +1966,7 @@ window.App = (function () {
                          [207, 110, 228],
                          [255, 0, 255],
                          [130, 0, 128]],
+                blankColor: [205, 205, 205],
                 task: null,
                 refreshTimer: 30,
                 desc: {},
@@ -2057,10 +2059,10 @@ window.App = (function () {
                                     q.push([nx, ny]);
 
                                     var start = ((ny - posY[0]) * n + (nx - posX[0])) * 4;
-                                    if(tmp[start + 3] != 255 && !cmpPixels(nx, ny))
+                                    if(tmp[start + 3] == 255 && !cmpPixels(nx, ny))
                                         self.task.push([nx, ny, [tmp[start], tmp[start + 1], tmp[start + 2]]]);
-                                    if(tmp[start + 3] == 255 && brd[start + 3] == 0)
-                                        self.task.push([nx, ny, [205, 205, 205]]);
+                                    if(tmp[start + 3] != 255 && brd[start + 3] == 0)
+                                        self.task.push([nx, ny, self.blankColor]);
                                 }
                             }
                         }
