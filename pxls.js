@@ -2149,7 +2149,7 @@ window.App = (function () {
                     Queue.prototype.size = function() {
                         this.start %= this.capacity;
                         this.end %= this.capacity;
-                        if(this.start <= this.end) return this.end - this.end;
+                        if(this.start <= this.end) return this.end - this.start;
                         return this.end + this.capacity - this.start;
                     };
 
