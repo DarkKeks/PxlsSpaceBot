@@ -872,7 +872,7 @@ window.App = (function () {
                 img_ctx: null,
                 img_data: null,
                 init_image_data_canvas: function() {
-                    var img = $('#board-template')[0];
+                    var img = self.elements.template[0];
                     self.img_ctx = $('<canvas>')[0].getContext('2d');
                     self.img_ctx.canvas.width = img.width;
                     self.img_ctx.canvas.height = img.height;
@@ -938,9 +938,9 @@ window.App = (function () {
                         };
                     self.elements.template = $("<img>").addClass("noselect pixelate").attr({
                         id: "board-template",
+                        crossOrigin: "Anonymous",
                         src: self.t.url,
-                        alt: "template",
-                        crossOrigin: "Anonymous"
+                        alt: "template"
                     }).css({
                         'image-rendering': 'crisp-edges',
                         top: self.t.y,

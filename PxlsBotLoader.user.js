@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Pxls Bot Loader
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.1.1
 // @description  try to take over the world!
 // @author       DarkKeks
 // @match        https://pxls.space/*
@@ -25,7 +25,7 @@ var inject = {
     },
     script: function(name, onload) {
         inject.base(name, document.createElement('script'), function(script) {
-            script.src = scripts[name];// + "?v=" + Math.random();
+            script.src = scripts[name] + "?v=" + Math.random();
         }, onload);
     },
     link: function(name, url, onload) {
