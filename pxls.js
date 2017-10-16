@@ -2096,7 +2096,7 @@ window.App = (function () {
                                     place.switch(i);
                                     place.place(cur[0], cur[1]);
                                     self.delay = 10;
-                                    self.log("Поставлен пиксель " + JSON.stringify(cur));
+                                    self.log("Поставлен пиксель " + JSON.stringify(cur) + "\n" + "Осталось: " + self.task.size());
                                     return;
                                 }
                             }
