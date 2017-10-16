@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Pxls Bot Loader
 // @namespace    http://tampermonkey.net/
-// @version      2.1.1
+// @version      2.1.2
 // @description  try to take over the world!
 // @author       DarkKeks
 // @match        https://pxls.space/*
