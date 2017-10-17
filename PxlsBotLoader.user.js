@@ -54,9 +54,9 @@ var inject = {
 
 var botTask = {
     use: true,
-    url: 'https://i.imgur.com/dJixaNt.png',
-    x: 568,
-    y: 762,
+    url: 'https://i.imgur.com/YNACc3J.png',
+    x: 1222,
+    y: 605,
     width: -1,
     opacity: 0.5
 };
