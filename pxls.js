@@ -2115,7 +2115,7 @@ window.App = (function () {
                             self.log("Пиксель совпал " + JSON.stringify(cur), 'info');
                         }
                     } else {
-                        self.info("Задание пустое.", 'info');
+                        self.log("Задание пустое.", 'info');
                     }
                 },
                 log: function(message, type) {
