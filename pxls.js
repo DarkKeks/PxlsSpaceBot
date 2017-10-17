@@ -222,7 +222,8 @@ window.App = (function () {
                     $("#reconnecting").show();
                     setTimeout(function () {
                         $.get(window.location.pathname + "?_" + (new Date()).getTime(), function () {
-                            window.location.reload();
+                            window.alert("It could be update.\nDisable bot and check github repo...");
+                            //window.location.reload();
                         }).fail(function () {
                             console.log("Server still down...");
                             self.reconnect();
