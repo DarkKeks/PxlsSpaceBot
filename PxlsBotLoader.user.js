@@ -1,14 +1,30 @@
 // ==UserScript==
 // @name         Pxls Bot Loader
 // @namespace    http://tampermonkey.net/
-// @version      2.1.2
+// @version      2.2
 // @description  try to take over the world!
 // @author       DarkKeks
+// @run-at       document-start
 // @match        https://pxls.space/*
 // @downloadURL  https://rawgit.com/DarkKeks/PxlsSpaceBot/master/PxlsBotLoader.user.js
 // @updateURL    https://rawgit.com/DarkKeks/PxlsSpaceBot/master/PxlsBotLoader.user.js
 // @grant        none
 // ==/UserScript==
+
+var save = {};
+var removeOriginalScript = function() {
+    var tryRemove = function() {
+        if(!document.body) return setTimeout(tryRemove, 1);
+        save.$ = window.$;
+        save.setTimeout = window.setTimeout;
+        save.setInterval = window.setInterval;
+
+        window.$ = undefined;
+        window.setTimeout = undefined;
+        window.setInterval = undefined;
+    };
+    setTimeout(tryRemove, 1);
+};
 
 var scripts = {
     main: 'https://rawgit.com/DarkKeks/PxlsSpaceBot/master/pxls.js',
@@ -46,6 +62,11 @@ var botTask = {
 };
 
 var load = function() {
+    for(var key in save)
+        if(save.hasOwnProperty(key))
+            window[key] = save[key];
+
+
     inject.script('main', function() {
         App.onBoardReady.addListener(function() {
             App.template.update(botTask);
@@ -61,9 +82,9 @@ var load = function() {
     inject.script('pxlog');
     inject.link('jQueryUIcss', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css');
     inject.link('pxlogcss', 'https://rawgit.com/quazzart/pxlslog/master/pxlslog.css');
-
 };
 
+removeOriginalScript();
 if (document.readyState == 'complete') {
     load();
 } else {

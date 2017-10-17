@@ -285,6 +285,7 @@ window.App = (function () {
                 }
             };
             return {
+                ws: self.ws,
                 init: self.init,
                 on: self.on,
                 send: self.send,
@@ -2104,13 +2105,13 @@ window.App = (function () {
                                     place.switch(i);
                                     place.place(cur[0], cur[1]);
                                     self.delay = 10;
-                                    self.log("Поставлен пиксель " + JSON.stringify(cur) + "\n" + "Осталось: " + self.task.size());
+                                    self.log("Поставлен пиксель " + JSON.stringify(cur) + "\n" + "Осталось: " + self.task.size(), 'info');
                                     return;
                                 }
                             }
                             self.log("Ошибка подбора цвета " + JSON.stringify(cur) + ".", 'error');
                         } else {
-                            self.log("Пиксель совпал " + JSON.stringify(cur) + ".");
+                            self.log("Пиксель совпал " + JSON.stringify(cur), 'info');
                         }
                     } else {
                         self.info("Задание пустое.", 'info');
@@ -2165,7 +2166,8 @@ window.App = (function () {
                 }()
             };
             return {
-                start: self.start
+                start: self.start,
+                log: self.log
             };
         })(),
         onBoardReady = (function() {
@@ -2192,6 +2194,12 @@ window.App = (function () {
                 addListener: self.addListener
             }
         })();
+
+    if(window.App) {
+        PixelBot.log("Original script is running.\n Terminating", 'error');
+        window.alert("Either disable bot, or enable adblock to run the game.");
+        return;
+    }
 
     // init progress
     query.init();
