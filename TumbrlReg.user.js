@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Tumbrl Reg
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  try to take over the world!
 // @author       DarkKeks
 // @match        https://www.tumblr.com/register*
@@ -31,11 +31,16 @@
         function fillForm() {
             var username = randomString();
             $('#signup_email').value = username + "@mail.ru";
-            $('#signup_password').value = randomString + "_9828";
+            $('#signup_password').value = username + "_9828";
             $('#signup_username').value = username;
+            return {
+                'username': username,
+                'e-mail': username + "@mail.ru",
+                'password': username + "_9828"
+            };
         }
 
-        fillForm();
+        var data = fillForm();
 
         var step2 = function() {
             if(!$('.signup_account_btn.active')) return setTimeout(step2, 100);
@@ -48,6 +53,8 @@
             var step3 = function() {
                 if(!$('.signup_birthday_btn.active')) return setTimeout(step3, 100);
                 $('.signup_birthday_btn.active').click();
+
+                alert(data['username'] + "\n" + data['password']);
             };
             setTimeout(step3, 100);
         };
